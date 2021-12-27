@@ -91,6 +91,7 @@ export const GoogleMapProvider = ({ children, apiKey }) => {
   };
 
   const clearMarkers = () => {
+    markers.forEach((marker) => marker.setMap(null));
     setMarkers([]);
   };
 
@@ -144,22 +145,28 @@ export const useCurrentCordinate = () => {
   const [error, setError] = useState<string>("");
 
   // get current cordinates
-  const getCurrentCordinates = async () => {
-    if (navigator.geolocation) {
+  const getCurrentCordinates = async (): Promise<GoogleMapCord> => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject("Geolocation is not supported by your browser");
+        setError("Geolocation is not supported by this browser");
+      }
+
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setCordinate({
+          const cordinate: GoogleMapCord = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
-          });
+          };
+          setCordinate(cordinate);
+          resolve(cordinate);
         },
         (error) => {
           setError(error.message);
+          reject(error.message);
         }
       );
-    } else {
-      setError("Geolocation is not supported by this browser");
-    }
+    });
   };
 
   return { getCurrentCordinates, cordinate, error };
