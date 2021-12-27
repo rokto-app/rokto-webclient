@@ -63,8 +63,8 @@ const FindDonors = () => {
         method: "POST",
         body: JSON.stringify({
           location: [
-            myLocation.split(",")[0].trim(),
-            myLocation.split(",")[1].trim(),
+            location.split(",")[0].trim(),
+            location.split(",")[1].trim(),
           ],
         }),
       }
@@ -82,6 +82,32 @@ const FindDonors = () => {
     });
   };
 
+  const donorsAroundMe = async () => {
+    setLoading(true);
+    const api = await fetch(
+      "https://rokto-app.netlify.app/.netlify/functions/find-markers",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          location: [
+            myLocation.split(",")[0].trim(),
+            myLocation.split(",")[1].trim(),
+          ],
+        }),
+      }
+    );
+    const res = await api.json();
+
+    if (!res.markers.length) alert("No markers found");
+    setLoading(false);
+    res.markers.forEach((marker) => {
+      addMarker({
+        lat: marker.location.coordinates[1],
+        lng: marker.location.coordinates[0],
+      });
+    });
+  };
+
   const pointMyLocation = () => {
     setLoading(true);
     getCurrentCordinates()
@@ -89,6 +115,7 @@ const FindDonors = () => {
         clearMarkers();
         addMarker(cordinate);
         setLoading(false);
+        setMyLocation(`${cordinate.lat},${cordinate.lng}`);
       })
       .catch((e) => {
         setLoading(false);
@@ -99,11 +126,21 @@ const FindDonors = () => {
   return (
     <div className="relative w-screen h-screen">
       <div className=" flex gap-6 flex-col shadow rounded-md w-[300px] bg-white bg-opacity-30 p-6 absolute top-10 left-10 z-50">
-        <div>
-          <Button loading={loading} onClick={pointMyLocation}>
-            Point my location
-          </Button>
-        </div>
+        {!myLocation && (
+          <div>
+            <Button loading={loading} onClick={pointMyLocation}>
+              Point my location
+            </Button>
+          </div>
+        )}
+
+        {myLocation && (
+          <div>
+            <Button loading={loading} onClick={donorsAroundMe}>
+              Donors around me
+            </Button>
+          </div>
+        )}
 
         <div>
           <input
@@ -120,7 +157,7 @@ const FindDonors = () => {
             type="text"
             placeholder="Find Donors near me"
             className="max-w-full"
-            onChange={(e) => setMyLocation(e.target.value)}
+            onChange={(e) => setLocation(e.target.value)}
           />
 
           <Button loading={loading} onClick={findnearestMarkers}>
